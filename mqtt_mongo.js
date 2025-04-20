@@ -21,7 +21,7 @@ mq.on('connect', function(){
 
 //Määritellään tietokanta-API
 const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://eki:eki@cluster0.91fze.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb+srv://mika:mika@sensoridata.ekd8bsd.mongodb.net/?retryWrites=true&w=majority&appName=sensoridata";
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -31,8 +31,8 @@ const client = new MongoClient(uri, {
 });
 
 //määritellään tietokannan ja kokoelman nimi sekä dataobjekti sensoridatan käsittelyyn
-const myDB = client.db("sensordata2");
-const myColl = myDB.collection("sensordata2");
+const myDB = client.db("sensoridata2");
+const myColl = myDB.collection("sensoridata2");
 var obj;
 
 //odotetaan dataa välityspalvelimelta ja viedään data tietokantaan
