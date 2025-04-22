@@ -1,52 +1,41 @@
+// MQTT + MongoDB: toimiva yhteys Shiftr.io:n kautta
 
-//MQTT-välityspalvelimen määrittely
-const mqtt    = require('mqtt');
-const broker = 'mqtt://test.mosquitto.org';
-const user = '';
-const pw = ''; 
+const mqtt = require('mqtt');
+const { MongoClient } = require('mongodb');
 
-//määritellään välityspalvelimen "olio"
-mq = mqtt.connect(broker, {
-  'username': user,
-  'password': pw
+// --- MQTT-asetukset ---
+const broker = 'mqtts://automaatio.cloud.shiftr.io';
+const options = {
+  username: 'automaatio',
+  password: 'Z0od2PZF65jbtcXu'
+};
+const mq = mqtt.connect(broker, options);
+
+mq.on('connect', () => {
+  console.log('✅ Yhdistetty MQTT-brokeriin');
+  mq.subscribe('automaatio/#');
 });
 
-//tilataan oikea topic
-mq.subscribe('automaatio/#');
-
-//liitytään välityspalvelimeen
-mq.on('connect', function(){
-    console.log('Connected.....');
+mq.on('error', (err) => {
+  console.error('❌ MQTT-yhteysvirhe:', err.message);
 });
 
-//Määritellään tietokanta-API
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const uri = "mongodb+srv://mika:mika@sensoridata.ekd8bsd.mongodb.net/?retryWrites=true&w=majority&appName=sensoridata";
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-//määritellään tietokannan ja kokoelman nimi sekä dataobjekti sensoridatan käsittelyyn
+// --- MongoDB-yhteys ---
+const uri = 'mongodb+srv://mika:mika@sensoridata.ekd8bsd.mongodb.net/?retryWrites=true&w=majority&appName=sensoridata';
+const client = new MongoClient(uri);
 const myDB = client.db("sensoridata2");
 const myColl = myDB.collection("sensoridata2");
-var obj;
 
-//odotetaan dataa välityspalvelimelta ja viedään data tietokantaan
-mq.on('message', function(topic, message) {
-  console.log(message.toString('utf8'));
-  obj = JSON.parse(message);
-  console.log(obj.Time, obj.T, obj.H, obj.DP, obj.pCount);
-	myColl.insertOne(obj);
-	console.log(
-	`An entry was inserted successfully`,
-	);
+// --- MQTT-viestin käsittely ---
+mq.on('message', async (topic, message) => {
+  try {
+    const obj = JSON.parse(message.toString());
+    console.log(`📩 Viesti vastaanotettu:`, obj);
+
+    await client.connect();
+    await myColl.insertOne(obj);
+    console.log('✅ Data tallennettu MongoDB:hen');
+  } catch (err) {
+    console.error('❌ Virhe viestin tai tallennuksen aikana:', err.message);
+  }
 });
-
-
-
-
-
