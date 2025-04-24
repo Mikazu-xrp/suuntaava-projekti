@@ -1,0 +1,37 @@
+name: CI/CD Pipeline for Heroku
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Vaihe 1: Hae koodi GitHub-repositoriosta
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Vaihe 2: Asenna Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      # Vaihe 3: Asenna riippuvuudet
+      - name: Install dependencies
+        run: npm install
+
+      # Vaihe 6: Deployaa Herokuun (vain push-tapahtumassa, ei PR:ssä)
+      - name: Deploy to Heroku
+        if: github.event_name == 'push'
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          git remote add heroku https://git.heroku.com/${{ secrets.HEROKU_APP_NAME }}.git
+          git push heroku main --force
