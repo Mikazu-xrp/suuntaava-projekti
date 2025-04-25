@@ -36,7 +36,7 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          # Manually set the Heroku remote with API key embedded
+          git remote remove heroku || true
           git remote add heroku https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/${{ secrets.HEROKU_APP_NAME }}.git
           git push heroku main --force
 
@@ -51,4 +51,6 @@ jobs:
         if: github.event_name == 'push'
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-      
+        timeout-minutes: 2 
+        run: |
+          heroku logs --num 50 -a ${{ secrets.HEROKU_APP_NAME }}
