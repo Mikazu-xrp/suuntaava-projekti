@@ -16,20 +16,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version: '22.14.0'
 
       - name: Install dependencies
         run: npm install
+
+      - name: Run tests
+        run: npm test
 
       - name: Deploy to Heroku
         if: github.event_name == 'push'
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          git remote add heroku https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/${{ secrets.HEROKU_APP_NAME }}.git
+          curl https://cli-assets.heroku.com/install.sh | sh
+          echo $HEROKU_API_KEY | heroku login --api-key
+          heroku git:remote -a ${{ secrets.HEROKU_APP_NAME }}
           git push heroku main --force
+
+      - name: Start the app on Heroku
+        if: github.event_name == 'push'
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo $HEROKU_API_KEY | heroku login --api-key
+          # Scale the dynos to start the app
+          heroku ps:scale worker=1 web=0 -a ${{ secrets.HEROKU_APP_NAME }}
+
+      - name: Check Heroku logs
+        if: github.event_name == 'push'
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo $HEROKU_API_KEY | heroku login --api-key
+          heroku logs --tail --num 50 -a ${{ secrets.HEROKU_APP_NAME }}
