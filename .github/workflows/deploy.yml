@@ -36,7 +36,8 @@ jobs:
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          heroku git:remote -a ${{ secrets.HEROKU_APP_NAME }}
+          # Manually set the Heroku remote with API key embedded
+          git remote add heroku https://heroku:${{ secrets.HEROKU_API_KEY }}@git.heroku.com/${{ secrets.HEROKU_APP_NAME }}.git
           git push heroku main --force
 
       - name: Start the app on Heroku
